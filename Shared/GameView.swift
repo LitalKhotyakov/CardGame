@@ -100,7 +100,9 @@ struct GameView: View {
         }
         .padding()
         .navigationTitle("Game")
+        #if os(iOS)
         .navigationBarBackButtonHidden(true)
+        #endif
         .onAppear(perform: startGame)
         .onDisappear {
             stopGame()
