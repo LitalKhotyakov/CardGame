@@ -22,21 +22,17 @@ struct SummaryView: View {
             
             Text("PC: \(opponentScore)")
                 .font(.title3)
-            
-            Button("Back to Main Menu") {
-                // חזרה למסך הראשי עם איפוס מלא
-                backToMainMenu()
-            }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
         }
         .padding()
         .navigationTitle("Game Over")
         #if os(iOS)
         .navigationBarBackButtonHidden(true)
         #endif
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                backToMainMenu()
+            }
+        }
     }
     
     func finalResult() -> String {
@@ -45,20 +41,16 @@ struct SummaryView: View {
         } else if playerScore < opponentScore {
             return "🤖 PC Wins! 🤖"
         } else {
-            // במקרה של תיקו - הבית מנצח
+            // In case of a tie - the house wins
             return "🤖 PC Wins! 🤖"
         }
     }
     
     func backToMainMenu() {
-        // איפוס המשתנה שמתחיל את המשחק
+        // Reset the variable that starts the game
         showGame = false
         
-        // חזרה למסך הראשי
+        // Go back to the main screen
         presentationMode.wrappedValue.dismiss()
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            presentationMode.wrappedValue.dismiss()
-        }
     }
 }

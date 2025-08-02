@@ -18,7 +18,7 @@ struct GameView: View {
     @State private var isGameActive = false
     @Environment(\.colorScheme) var colorScheme
     
-    // שימוש בקלפים מהמערכת
+    // Using cards from the system
     let cards = [
         ("🂡", 1),  // Ace of Spades
         ("🂢", 2),  // 2 of Spades
@@ -36,76 +36,78 @@ struct GameView: View {
     ]
     
     var body: some View {
-        VStack(spacing: 20) {
-            HStack {
-                Text(playerName)
-                Spacer()
-                Text("PC")
-            }
-            .font(.headline)
-            .padding()
-            
-            Text("Round: \(round) / 10")
-                .font(.title2)
-            
-            // שעון ספירה
-            if isGameActive {
-                Text("Next round in: \(countdown)")
-                    .font(.title3)
-                    .foregroundColor(.red)
-            }
-            
-            HStack(spacing: 30) {
-                // קלף השחקן - גודל גדול יותר
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.white)
-                        .frame(width: 160, height: 220)
-                        .shadow(radius: 5)
+        NavigationView {
+            VStack(spacing: 20) {
+                HStack {
+                    Text(playerName)
+                    Spacer()
+                    Text("PC")
+                }
+                .font(.headline)
+                .padding()
+                
+                Text("Round: \(round) / 10")
+                    .font(.title2)
+                
+                // Countdown timer
+                if isGameActive {
+                    Text("Next round in: \(countdown)")
+                        .font(.title3)
+                        .foregroundColor(.red)
+                }
+                
+                HStack(spacing: 30) {
+                    // Player's card - larger size
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.white)
+                            .frame(width: 180, height: 260)
+                            .shadow(radius: 5)
+                        
+                        if showCards && !playerCard.isEmpty {
+                            Text(playerCard)
+                                .font(.system(size: 180))
+                        } else {
+                            Text("🂠")
+                                .font(.system(size: 180))
+                        }
+                    }
                     
-                    if showCards && !playerCard.isEmpty {
-                        Text(playerCard)
-                            .font(.system(size: 100))
-                    } else {
-                        Text("🂠")
-                            .font(.system(size: 100))
+                    // Opponent's card - larger size
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.white)
+                            .frame(width: 180, height: 260)
+                            .shadow(radius: 5)
+                        
+                        if showCards && !opponentCard.isEmpty {
+                            Text(opponentCard)
+                                .font(.system(size: 180))
+                        } else {
+                            Text("🂠")
+                                .font(.system(size: 180))
+                        }
                     }
                 }
                 
-                // קלף המחשב - גודל גדול יותר
-                ZStack {
-                    RoundedRectangle(cornerRadius: 15)
-                        .fill(colorScheme == .dark ? Color.gray.opacity(0.3) : Color.white)
-                        .frame(width: 160, height: 220)
-                        .shadow(radius: 5)
-                    
-                    if showCards && !opponentCard.isEmpty {
-                        Text(opponentCard)
-                            .font(.system(size: 100))
-                    } else {
-                        Text("🂠")
-                            .font(.system(size: 100))
-                    }
-                }
+                Text("\(playerName): \(playerScore) | PC: \(opponentScore)")
+                    .font(.headline)
+                
+                NavigationLink(
+                    destination: SummaryView(playerName: playerName, playerScore: playerScore, opponentScore: opponentScore, showGame: $showGame),
+                    isActive: $showSummary,
+                    label: { EmptyView() }
+                )
             }
-            
-            Text("\(playerName): \(playerScore) | PC: \(opponentScore)")
-                .font(.headline)
-            
-            NavigationLink(
-                "",
-                destination: SummaryView(playerName: playerName, playerScore: playerScore, opponentScore: opponentScore, showGame: $showGame),
-                isActive: $showSummary
-            )
-        }
-        .padding()
-        .navigationTitle("Game")
-        #if os(iOS)
-        .navigationBarBackButtonHidden(true)
-        #endif
-        .onAppear(perform: startGame)
-        .onDisappear {
-            stopGame()
+            .padding()
+            .navigationTitle("Game")
+            #if os(iOS)
+            .navigationBarBackButtonHidden(true)
+            #endif
+            .onAppear(perform: startGame)
+            .onDisappear {
+                stopGame()
+            }
         }
     }
     
@@ -121,7 +123,7 @@ struct GameView: View {
         countdown = 5
         showCards = false
         
-        // טיימר ספירה לאחור
+        // Countdown timer
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             countdown -= 1
             if countdown <= 0 {
@@ -134,7 +136,7 @@ struct GameView: View {
     func playRound() {
         round += 1
         
-        // בחירת קלפים אקראיים
+        // Select random cards
         let playerCardData = cards.randomElement()!
         let opponentCardData = cards.randomElement()!
         
@@ -142,26 +144,26 @@ struct GameView: View {
         opponentCard = opponentCardData.0
         showCards = true
         
-        // חישוב ניקוד
+        // Calculate score
         if playerCardData.1 > opponentCardData.1 {
             playerScore += 1
         } else if playerCardData.1 < opponentCardData.1 {
             opponentScore += 1
         }
-        // במקרה של שוויון - לא מוסיפים נקודות
+        // In case of a tie - no points are added
         
-        // הסתרת קלפים לאחר 3 שניות
+        // Hide cards after 3 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             showCards = false
             
-            // סיום המשחק לאחר 10 סיבובים
+            // End the game after 10 rounds
             if round >= 10 {
                 isGameActive = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     showSummary = true
                 }
             } else {
-                // התחלת סיבוב חדש
+                // Start a new round
                 startRound()
             }
         }
